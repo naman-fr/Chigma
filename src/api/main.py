@@ -17,30 +17,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
 
 from src.api.routes.detection import router as detection_router
 from src.api.routes.vlm import router as vlm_router
 from src.api.routes.drone import router as drone_router
 from src.api.routes.health import router as health_router
-
-# ── Prometheus Metrics ──
-REQUEST_COUNT = Counter(
-    "chigma_requests_total",
-    "Total HTTP requests",
-    ["method", "endpoint", "status"],
-)
-REQUEST_LATENCY = Histogram(
-    "chigma_request_latency_seconds",
-    "Request latency in seconds",
-    ["method", "endpoint"],
-)
-INFERENCE_COUNT = Counter(
-    "chigma_inference_total",
-    "Total inference requests",
-    ["model_type"],
-)
 
 
 @asynccontextmanager

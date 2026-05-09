@@ -7,7 +7,6 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -60,6 +59,7 @@ async def predict(
         raise HTTPException(400, "File must be an image")
 
     contents = await image.read()
+    import numpy as np
     nparr = np.frombuffer(contents, np.uint8)
 
     import cv2
@@ -87,6 +87,7 @@ async def predict_batch(
 
     for img_file in images:
         contents = await img_file.read()
+        import numpy as np
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is not None:
