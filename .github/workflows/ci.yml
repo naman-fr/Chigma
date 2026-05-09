@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install dependencies
+      - name: Install linters
         run: pip install ruff
       - name: Lint with Ruff
         run: ruff check src/ tests/
@@ -27,8 +27,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install test dependencies
+      - name: Install dependencies
         run: |
+          pip install numpy opencv-python-headless pillow
           pip install fastapi uvicorn pydantic python-multipart aiofiles loguru prometheus-client pyyaml rich click tqdm jinja2 httpx
           pip install pytest pytest-asyncio pytest-cov httpx
       - name: Run tests

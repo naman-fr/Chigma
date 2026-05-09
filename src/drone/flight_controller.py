@@ -38,6 +38,10 @@ class FlightController:
         self._connection = None
         self._armed = False
         self._mode = "STABILIZE"
+        self._telemetry_alt = 0.0
+        self._telemetry_spd = 0.0
+        self._telemetry_bat = 85.0
+        self._heading = 0.0
 
         logger.info(f"FlightController: {connection_string}")
 
@@ -65,6 +69,7 @@ class FlightController:
     async def disarm(self) -> bool:
         """Disarm the drone motors."""
         self._armed = False
+        self._telemetry_spd = 0.0
         logger.info("Motors disarmed")
         return True
 
@@ -78,6 +83,8 @@ class FlightController:
         altitude_m = max(altitude_m, self.safety["min_altitude_m"])
 
         self._mode = "GUIDED"
+        self._telemetry_alt = altitude_m
+        self._telemetry_spd = 2.0
         logger.info(f"Taking off to {altitude_m}m")
         return True
 
@@ -89,7 +96,8 @@ class FlightController:
         speed_ms: float = 5.0,
     ) -> bool:
         """Navigate to GPS waypoint."""
-        # Validate against geofence
+        self._telemetry_alt = alt
+        self._telemetry_spd = speed_ms
         logger.info(f"Navigating to ({lat:.6f}, {lon:.6f}, {alt:.1f}m) at {speed_ms}m/s")
         return True
 
@@ -100,6 +108,8 @@ class FlightController:
     ) -> bool:
         """Navigate to local NED position (GPS-denied mode)."""
         z = max(z, self.safety["min_altitude_m"])
+        self._telemetry_alt = z
+        self._telemetry_spd = speed_ms
         logger.info(f"Local navigation to ({x:.1f}, {y:.1f}, {z:.1f})")
         return True
 
@@ -111,38 +121,48 @@ class FlightController:
         altitude_m: float = 30.0,
     ) -> bool:
         """Orbit around a point."""
+        self._telemetry_alt = altitude_m
+        self._telemetry_spd = 3.0
+        self._mode = "GUIDED"
         logger.info(f"Orbiting at radius {radius_m}m, altitude {altitude_m}m")
         return True
 
     async def return_to_home(self) -> bool:
         """Return to launch position."""
         self._mode = "RTL"
+        self._telemetry_spd = 5.0
         logger.info("Returning to home")
         return True
 
     async def emergency_stop(self) -> bool:
         """Emergency stop — immediate hover."""
         self._mode = "BRAKE"
+        self._telemetry_spd = 0.0
         logger.warning("EMERGENCY STOP — hovering in place")
         return True
 
     async def land(self) -> bool:
         """Land at current position."""
         self._mode = "LAND"
+        self._telemetry_spd = 0.5
         logger.info("Landing at current position")
         return True
 
     def get_telemetry(self) -> dict[str, Any]:
         """Get current telemetry data."""
+        # Simulate battery drain
+        if self._armed:
+            self._telemetry_bat = max(0.0, self._telemetry_bat - 0.1)
+
         return {
             "connected": self._connection is not None,
             "armed": self._armed,
             "mode": self._mode,
-            "battery_pct": 85.0,
-            "altitude_m": 0.0,
-            "speed_ms": 0.0,
-            "heading_deg": 0.0,
+            "battery_pct": round(self._telemetry_bat, 1),
+            "altitude_m": round(self._telemetry_alt, 1),
+            "speed_ms": round(self._telemetry_spd, 1),
+            "heading_deg": self._heading,
             "gps_fix": True,
             "satellites": 12,
-            "position": {"lat": 0.0, "lon": 0.0, "alt": 0.0},
+            "position": {"lat": 0.0, "lon": 0.0, "alt": round(self._telemetry_alt, 1)},
         }
