@@ -1,0 +1,50 @@
+# ============================================================================
+# Chigma — Dataset Configuration
+# Supports NEU-DET (6 classes) and GC10-DET (10 classes)
+# ============================================================================
+
+# ── Paths ──
+path: ./data/processed
+train: images/train
+val: images/val
+test: images/test
+
+# ── NEU-DET Classes (6 surface defect types) ──
+# Source: Northeastern University Steel Surface Defect Dataset
+names:
+  0: crazing        # Fine network of cracks on the surface
+  1: inclusion      # Non-metallic inclusions embedded in steel
+  2: patches        # Irregular surface patches / discoloration
+  3: pitted_surface # Small pits or cavities on the surface
+  4: rolled_in_scale  # Scale pressed into the surface during rolling
+  5: scratches      # Linear marks from mechanical contact
+
+# ── Extended GC10-DET Classes (append when using combined dataset) ──
+# Uncomment below to use GC10-DET (10-class galvanized steel defects)
+# names:
+#   0: punching_hole
+#   1: welding_line
+#   2: crescent_gap
+#   3: water_spot
+#   4: oil_spot
+#   5: silk_spot
+#   6: inclusion
+#   7: rolled_pit
+#   8: crease
+#   9: waist_folding
+
+# ── Data Augmentation (Ultralytics built-in) ──
+augmentation:
+  hsv_h: 0.015       # Hue augmentation range
+  hsv_s: 0.7         # Saturation augmentation range
+  hsv_v: 0.4         # Value augmentation range
+  degrees: 10.0      # Rotation augmentation range (degrees)
+  translate: 0.1     # Translation augmentation range
+  scale: 0.5         # Scale augmentation range
+  shear: 2.0         # Shear augmentation range
+  perspective: 0.0   # Perspective augmentation range
+  flipud: 0.5        # Vertical flip probability
+  fliplr: 0.5        # Horizontal flip probability
+  mosaic: 1.0        # Mosaic augmentation probability
+  mixup: 0.1         # MixUp augmentation probability
+  copy_paste: 0.1    # Copy-Paste augmentation probability

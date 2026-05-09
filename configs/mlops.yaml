@@ -1,0 +1,91 @@
+# ============================================================================
+# Chigma — MLOps Configuration
+# MLflow + Prometheus + Grafana + DVC
+# ============================================================================
+
+# ── MLflow ──
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  artifact_root: "./mlruns"
+  registry_uri: "sqlite:///mlflow.db"
+  default_experiment: "chigma-defect-detection"
+
+# ── DVC ──
+dvc:
+  remote:
+    name: "chigma-storage"
+    url: "s3://chigma-data"      # S3 / GCS / Azure Blob
+  cache_dir: ".dvc/cache"
+  autostage: true
+
+# ── Prometheus ──
+prometheus:
+  port: 9090
+  scrape_interval: 15s
+  metrics:
+    - name: "inference_latency_seconds"
+      type: "histogram"
+      help: "Model inference latency in seconds"
+      buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
+    - name: "inference_requests_total"
+      type: "counter"
+      help: "Total number of inference requests"
+    - name: "model_confidence_score"
+      type: "histogram"
+      help: "Distribution of model confidence scores"
+      buckets: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    - name: "active_model_version"
+      type: "gauge"
+      help: "Currently active model version"
+    - name: "data_drift_score"
+      type: "gauge"
+      help: "Data drift score (0=no drift, 1=full drift)"
+
+# ── Grafana ──
+grafana:
+  port: 3000
+  admin_user: "admin"
+  admin_password: "${GRAFANA_PASSWORD}"
+  dashboards:
+    - "model_performance"
+    - "system_health"
+    - "data_drift"
+
+# ── Alerting ──
+alerting:
+  rules:
+    - name: "HighLatency"
+      condition: "inference_latency_seconds > 0.5"
+      severity: "warning"
+      channel: "slack"
+    - name: "LowAccuracy"
+      condition: "model_confidence_score < 0.3"
+      severity: "critical"
+      channel: "pagerduty"
+    - name: "DataDrift"
+      condition: "data_drift_score > 0.7"
+      severity: "warning"
+      channel: "email"
+
+# ── API Server ──
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false                  # Set true for dev
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit:
+    requests_per_minute: 60
+    burst: 10
+
+# ── Logging ──
+logging:
+  level: "INFO"
+  format: "json"
+  output:
+    - "stdout"
+    - "file://logs/chigma.log"
+  rotation: "100 MB"
+  retention: "30 days"

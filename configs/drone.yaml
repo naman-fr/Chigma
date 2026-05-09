@@ -1,0 +1,95 @@
+# ============================================================================
+# Chigma — Drone Autonomy Configuration
+# Antigravity A1 + AirSim Simulation
+# ============================================================================
+
+# ── Hardware Profile ──
+drone:
+  name: "Antigravity A1"
+  type: "quadrotor"
+  weight_g: 249
+  max_flight_time_min: 24
+  max_speed_ms: 15.0
+  max_altitude_m: 120.0
+
+# ── Perception ──
+perception:
+  model: "yolo11n"               # Lightweight model for real-time
+  imgsz: 640
+  conf_threshold: 0.35
+  iou_threshold: 0.45
+  tracker: "botsort"             # botsort / bytetrack
+  camera:
+    fov: 150                     # 360° camera FOV segment
+    resolution: [1920, 1080]
+    fps: 30
+
+# ── Visual SLAM ──
+slam:
+  backend: "orbslam3"            # orbslam3 / rtabmap
+  vocabulary: "models/orb_vocab.bin"
+  map_save_path: "data/maps/"
+  keyframe_interval: 5
+  loop_closure: true
+  point_cloud:
+    voxel_size: 0.05
+    max_points: 500000
+
+# ── Reinforcement Learning Agent ──
+rl:
+  algorithm: "PPO"               # PPO / SAC
+  policy: "MultiInputPolicy"
+  total_timesteps: 1000000
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  reward:
+    target_reached: 100.0
+    collision: -50.0
+    step_penalty: -0.1
+    proximity_bonus: 1.0
+
+# ── Flight Controller ──
+flight_controller:
+  protocol: "mavlink"            # mavlink / ros2
+  connection: "udp:127.0.0.1:14540"
+  heartbeat_interval_s: 1.0
+  command_timeout_s: 5.0
+  safety:
+    max_tilt_deg: 35.0
+    min_altitude_m: 2.0
+    geofence_radius_m: 100.0
+    return_on_low_battery: true
+    battery_threshold_pct: 20
+
+# ── Simulation (AirSim) ──
+simulation:
+  enabled: true
+  backend: "airsim"
+  settings:
+    clock_speed: 1.0
+    wind_speed_ms: [0, 0, 0]
+    time_of_day: "12:00:00"
+    weather: "clear"             # clear / rain / fog / snow
+  environments:
+    - "Blocks"
+    - "AirSimNH"
+    - "CityEnviron"
+
+# ── VLM Flight Commands ──
+vlm_commands:
+  model: "qwen3-vl-7b"
+  safety_validation: true
+  max_altitude_override: false
+  supported_commands:
+    - "fly_to"
+    - "orbit"
+    - "follow"
+    - "inspect"
+    - "return_home"
+    - "hover"
+    - "scan_area"
