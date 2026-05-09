@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chigma - Industrial Vision Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script type="module" src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="brand">
+                <i data-lucide="hexagon" class="brand-icon"></i>
+                <h1 class="brand-name">Chigma</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </button>
+                <button class="nav-item" data-view="detection">
+                    <i data-lucide="scan-line"></i> Defect Detection
+                </button>
+                <button class="nav-item" data-view="vlm">
+                    <i data-lucide="message-square"></i> VLM Copilot
+                </button>
+                <button class="nav-item" data-view="drone">
+                    <i data-lucide="plane"></i> Drone Autonomy
+                </button>
+            </nav>
+
+            <div class="system-status">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="health-text">System Checking...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view-section active">
+                <header class="section-header">
+                    <h2>Platform Overview</h2>
+                    <p>GenAI-Enhanced Industrial Vision & Drone Autonomy</p>
+                </header>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card glass-panel">
+                        <div class="metric-icon"><i data-lucide="cpu"></i></div>
+                        <div class="metric-info">
+                            <h3>Compute Node</h3>
+                            <p id="metric-gpu">NVIDIA RTX (Checking...)</p>
+                        </div>
+                    </div>
+                    <div class="metric-card glass-panel">
+                        <div class="metric-icon"><i data-lucide="activity"></i></div>
+                        <div class="metric-info">
+                            <h3>API Status</h3>
+                            <p id="metric-status" class="text-gradient">Online</p>
+                        </div>
+                    </div>
+                    <div class="metric-card glass-panel">
+                        <div class="metric-icon"><i data-lucide="layers"></i></div>
+                        <div class="metric-info">
+                            <h3>Active Models</h3>
+                            <p>FD-YOLO11, Qwen2.5-VL</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-hero glass-panel">
+                    <div class="hero-content">
+                        <h3>Welcome to the future of Industrial Inspection</h3>
+                        <p>Upload a surface image to detect anomalies or chat with our Vision-Language copilot for automated reporting.</p>
+                        <button class="btn btn-primary" onclick="document.querySelector('[data-view=detection]').click()">Start Inspection</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detection View -->
+            <section id="view-detection" class="view-section">
+                <header class="section-header">
+                    <h2>Defect Detection</h2>
+                    <p>FD-YOLO11 real-time surface anomaly detection</p>
+                </header>
+                
+                <div class="workspace-grid">
+                    <div class="upload-panel glass-panel">
+                        <form id="detection-form">
+                            <div class="file-drop-zone" id="detection-dropzone">
+                                <i data-lucide="upload-cloud"></i>
+                                <p>Drag & drop image or click to browse</p>
+                                <input type="file" id="detection-file" accept="image/*" required hidden>
+                            </div>
+                            
+                            <div class="controls">
+                                <div class="slider-group">
+                                    <label>Confidence Threshold: <span id="conf-val">0.25</span></label>
+                                    <input type="range" id="conf-slider" min="0" max="1" step="0.05" value="0.25">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i data-lucide="zap"></i> Run Inference
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="results-panel glass-panel">
+                        <div class="image-container" id="detection-result-container">
+                            <div class="placeholder-text">
+                                <i data-lucide="image"></i>
+                                <p>Results will appear here</p>
+                            </div>
+                            <img id="detection-preview" style="display: none;">
+                            <canvas id="detection-canvas"></canvas>
+                        </div>
+                        <div id="detection-stats" class="stats-box"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VLM View -->
+            <section id="view-vlm" class="view-section">
+                <header class="section-header">
+                    <h2>Vision-Language Copilot</h2>
+                    <p>Ask natural language questions about industrial surfaces</p>
+                </header>
+
+                <div class="workspace-grid">
+                    <div class="upload-panel glass-panel">
+                        <form id="vlm-form">
+                            <div class="file-drop-zone" id="vlm-dropzone">
+                                <img id="vlm-preview" style="display: none;" class="preview-img">
+                                <div class="dropzone-content" id="vlm-drop-content">
+                                    <i data-lucide="image-plus"></i>
+                                    <p>Select context image</p>
+                                </div>
+                                <input type="file" id="vlm-file" accept="image/*" required hidden>
+                            </div>
+                            
+                            <div class="chat-input-group">
+                                <input type="text" id="vlm-query" class="text-input" placeholder="e.g., 'What defects are visible?'" required>
+                                <button type="submit" class="btn btn-primary btn-icon">
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="chat-panel glass-panel">
+                        <div class="chat-history" id="vlm-chat">
+                            <div class="chat-msg system-msg">
+                                <i data-lucide="bot"></i>
+                                <div class="msg-bubble">Hello! Upload an image and ask me to inspect it or generate a report.</div>
+                            </div>
+                        </div>
+                        <button id="vlm-report-btn" class="btn btn-secondary btn-full mt-3">
+                            <i data-lucide="file-text"></i> Generate Auto-Report
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
