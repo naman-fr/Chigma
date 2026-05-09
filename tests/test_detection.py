@@ -1,6 +1,7 @@
 """Tests for FD-YOLO11 detection module."""
 
 import pytest
+
 torch = pytest.importorskip('torch')
 
 

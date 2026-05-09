@@ -1,6 +1,7 @@
 """Tests for FastAPI endpoints."""
 
 import pytest
+
 pytest.importorskip("torch")
 
 from fastapi.testclient import TestClient

@@ -75,9 +75,10 @@ async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 import os
+
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 app.mount("/static", StaticFiles(directory="src/api/static"), name="static")
 
@@ -86,7 +87,7 @@ app.mount("/static", StaticFiles(directory="src/api/static"), name="static")
 async def root():
     """Serve the Chigma Frontend Dashboard."""
     template_path = os.path.join("src", "api", "templates", "index.html")
-    with open(template_path, "r", encoding="utf-8") as f:
+    with open(template_path, encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 

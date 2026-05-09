@@ -1,5 +1,6 @@
 """Tests for VLM Copilot module."""
 import pytest
+
 pytest.importorskip("torch")
 
 from unittest.mock import MagicMock, patch

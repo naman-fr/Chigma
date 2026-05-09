@@ -1,8 +1,8 @@
 """Tests for Drone Autonomy module."""
 
 import pytest
+
 np = pytest.importorskip('numpy')
-import pytest
 
 
 class TestPerception:
