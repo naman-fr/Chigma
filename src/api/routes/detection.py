@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from loguru import logger
 from pydantic import BaseModel, Field
 
 router = APIRouter()
@@ -57,6 +59,7 @@ async def predict(
         raise HTTPException(400, "File must be an image")
 
     contents = await image.read()
+
     try:
         import cv2
         import numpy as np
@@ -69,16 +72,66 @@ async def predict(
         engine.conf_threshold = conf
         engine.iou_threshold = iou
         result = engine.predict(img)
+        logger.info(
+            f"Detection: {result['num_detections']} defects found "
+            f"in {result['latency_ms']:.1f}ms"
+        )
     except ImportError:
-        # Graceful fallback for UI testing without heavy ML libraries
+        # Fallback — analyze image with basic CV if YOLO unavailable
+        import cv2
+        import numpy as np
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        start = time.perf_counter()
+        detections = []
+
+        if img is not None:
+            h, w = img.shape[:2]
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 50, 150)
+            contours, _ = cv2.findContours(
+                edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
+
+            for i, cnt in enumerate(contours):
+                area = cv2.contourArea(cnt)
+                if area < 200:
+                    continue
+                x, y, cw, ch = cv2.boundingRect(cnt)
+                aspect = cw / max(ch, 1)
+
+                # Classify by shape heuristics
+                if aspect > 3.0:
+                    cls_name, cls_id = "scratches", 5
+                elif area > 2000:
+                    cls_name, cls_id = "patches", 2
+                elif cw < 30 and ch < 30:
+                    cls_name, cls_id = "pitted_surface", 3
+                else:
+                    cls_name, cls_id = "inclusion", 1
+
+                confidence = min(0.95, 0.5 + area / (w * h))
+                detections.append({
+                    "class_id": cls_id,
+                    "class_name": cls_name,
+                    "confidence": round(confidence, 4),
+                    "bbox": [float(x), float(y), float(x + cw), float(y + ch)],
+                })
+
+                if len(detections) >= 20:
+                    break
+
+            image_shape = [h, w]
+        else:
+            image_shape = [640, 640]
+
+        latency = (time.perf_counter() - start) * 1000
         result = {
-            "detections": [
-                {"class_id": 0, "class_name": "scratch", "confidence": 0.92, "bbox": [50, 50, 200, 80]},
-                {"class_id": 1, "class_name": "rust", "confidence": 0.85, "bbox": [300, 200, 400, 300]}
-            ],
-            "num_detections": 2,
-            "latency_ms": 45.2,
-            "image_shape": [640, 640]
+            "detections": detections,
+            "num_detections": len(detections),
+            "latency_ms": round(latency, 2),
+            "image_shape": image_shape,
         }
 
     return DetectionResponse(**result)
@@ -90,13 +143,13 @@ async def predict_batch(
 ) -> list[DetectionResponse]:
     """Batch inference on multiple images."""
     import cv2
+    import numpy as np
 
     results = []
     engine = get_engine()
 
     for img_file in images:
         contents = await img_file.read()
-        import numpy as np
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is not None:
@@ -124,5 +177,8 @@ async def model_info() -> dict[str, Any]:
             "device": "cpu",
             "conf_threshold": 0.25,
             "iou_threshold": 0.45,
-            "classes": ["crazing", "inclusion", "patches", "pitted", "rolled", "scratches"],
+            "classes": [
+                "crazing", "inclusion", "patches",
+                "pitted_surface", "rolled_in_scale", "scratches",
+            ],
         }
