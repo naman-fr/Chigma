@@ -8,34 +8,35 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
+# Install only the runtime API dependencies (not the full ML stack)
+# ML/DL libraries (torch, ultralytics, transformers) are installed
+# separately in GPU-enabled deployment environments.
 COPY pyproject.toml ./
+
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir build && \
-    pip install --no-cache-dir ".[dev]" --target /install
+    pip install --no-cache-dir \
+        fastapi "uvicorn[standard]" pydantic python-multipart aiofiles \
+        prometheus-client pyyaml rich loguru click tqdm jinja2 httpx \
+        numpy opencv-python-headless pillow scipy \
+        --target /install
 
 # ── Stage 2: Runtime ──
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+FROM python:3.11-slim
 
-# System dependencies
+# System dependencies for OpenCV headless
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 python3.11-venv python3-pip \
-    libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender1 \
+    libgl1-mesa-glx libglib2.0-0 \
     curl && \
     rm -rf /var/lib/apt/lists/*
-
-# Set Python
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
-    ln -sf /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR /app
 
 # Copy installed packages from builder
-COPY --from=builder /install /usr/local/lib/python3.11/dist-packages
+COPY --from=builder /install /usr/local/lib/python3.11/site-packages
 
 # Copy application code
 COPY src/ /app/src/
 COPY configs/ /app/configs/
-COPY mlops/ /app/mlops/
 
 # Create directories
 RUN mkdir -p /app/models/checkpoints /app/models/exports /app/data /app/logs /app/metrics
@@ -47,8 +48,7 @@ USER chigma
 
 # Environment variables
 ENV PYTHONPATH=/app \
-    PYTHONUNBUFFERED=1 \
-    CUDA_VISIBLE_DEVICES=0
+    PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
