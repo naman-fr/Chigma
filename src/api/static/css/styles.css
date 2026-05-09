@@ -519,3 +519,12 @@ input[type="range"] {
 }
 .badge-fail { background: rgba(239,68,68,0.2); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.5); }
 .badge-pass { background: rgba(16,185,129,0.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.5); }
+
+ / *   S a m p l e   I m a g e s   C S S   * / 
+ . s a m p l e - g r i d   {   d i s p l a y :   f l e x ;   g a p :   1 0 p x ;   } 
+ . s a m p l e - i m g   {   w i d t h :   8 0 p x ;   h e i g h t :   6 0 p x ;   o b j e c t - f i t :   c o v e r ;   b o r d e r - r a d i u s :   8 p x ;   c u r s o r :   p o i n t e r ;   b o r d e r :   2 p x   s o l i d   t r a n s p a r e n t ;   t r a n s i t i o n :   a l l   0 . 2 s ;   } 
+ . s a m p l e - i m g : h o v e r   {   b o r d e r - c o l o r :   v a r ( - - a c c e n t - p r i m a r y ) ;   t r a n s f o r m :   s c a l e ( 1 . 0 5 ) ;   } 
+ . t e x t - s m   {   f o n t - s i z e :   0 . 8 5 r e m ;   } 
+ . m b - 2   {   m a r g i n - b o t t o m :   0 . 5 r e m ;   } 
+  
+ 

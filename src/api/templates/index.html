@@ -105,7 +105,14 @@
                                 <input type="file" id="detection-file" accept="image/*" required hidden>
                             </div>
                             
-                            <div class="controls">
+                            <div class="sample-images mt-3">
+                                <p class="text-sm text-secondary mb-2">Or try a sample image:</p>
+                                <div class="sample-grid">
+                                    <img src="/static/images/sample1.png" class="sample-img" onclick="loadSample('detection-file', '/static/images/sample1.png', 'detection-dropzone')">
+                                </div>
+                            </div>
+                            
+                            <div class="controls mt-3">
                                 <div class="slider-group">
                                     <label>Confidence Threshold: <span id="conf-val">0.25</span></label>
                                     <input type="range" id="conf-slider" min="0" max="1" step="0.05" value="0.25">
@@ -150,8 +157,15 @@
                                 </div>
                                 <input type="file" id="vlm-file" accept="image/*" required hidden>
                             </div>
+
+                            <div class="sample-images mt-3">
+                                <p class="text-sm text-secondary mb-2">Or try a sample image:</p>
+                                <div class="sample-grid">
+                                    <img src="/static/images/sample1.png" class="sample-img" onclick="loadSample('vlm-file', '/static/images/sample1.png', 'vlm-dropzone', 'vlm-preview', 'vlm-drop-content')">
+                                </div>
+                            </div>
                             
-                            <div class="chat-input-group">
+                            <div class="chat-input-group mt-3">
                                 <input type="text" id="vlm-query" class="text-input" placeholder="e.g., 'What defects are visible?'" required>
                                 <button type="submit" class="btn btn-primary btn-icon">
                                     <i data-lucide="send"></i>
