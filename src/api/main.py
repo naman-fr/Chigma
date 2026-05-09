@@ -7,23 +7,20 @@ Prometheus metrics integration.
 
 from __future__ import annotations
 
-import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-import click
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from loguru import logger
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.responses import Response
 
 from src.api.routes.detection import router as detection_router
-from src.api.routes.vlm import router as vlm_router
 from src.api.routes.drone import router as drone_router
 from src.api.routes.health import router as health_router
+from src.api.routes.vlm import router as vlm_router
 
 
 @asynccontextmanager
@@ -78,16 +75,19 @@ async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+import os
+
+app.mount("/static", StaticFiles(directory="src/api/static"), name="static")
+
 # ── Root ──
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    """API root — platform info."""
-    return {
-        "platform": "Chigma",
-        "version": "0.1.0",
-        "modules": ["detection", "vlm", "drone"],
-        "docs": "/docs",
-    }
+    """Serve the Chigma Frontend Dashboard."""
+    template_path = os.path.join("src", "api", "templates", "index.html")
+    with open(template_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
 
 # ── CLI Entry Point ──

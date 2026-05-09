@@ -13,7 +13,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import yaml
 import click
 from loguru import logger
 

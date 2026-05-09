@@ -1,7 +1,6 @@
 """Tests for FD-YOLO11 detection module."""
 
 import torch
-import pytest
 
 
 class TestSCC3k2:

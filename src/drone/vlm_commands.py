@@ -12,7 +12,6 @@ from typing import Any
 
 from loguru import logger
 
-
 # Supported command patterns
 COMMAND_PATTERNS = {
     "fly_to": [

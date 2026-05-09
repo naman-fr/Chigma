@@ -12,7 +12,6 @@ from typing import Any
 
 from loguru import logger
 
-
 # Mapping from defect type name to class ID
 DEFECT_CLASS_MAP = {
     "crazing": 0,

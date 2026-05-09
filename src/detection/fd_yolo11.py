@@ -8,16 +8,15 @@ Reference: IEEE Access, 2025
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-import yaml
 import torch
 import torch.nn as nn
+import yaml
 from loguru import logger
 
-from src.detection.sc_c3k2 import SCC3k2
-from src.detection.fsppf import FSPPF
 from src.detection.dysample import DySample
+from src.detection.fsppf import FSPPF
+from src.detection.sc_c3k2 import SCC3k2
 
 
 class FDYOLOBackbone(nn.Module):
@@ -159,7 +158,7 @@ class FDYOLO11(nn.Module):
         return [self.head_p3(fused[0]), self.head_p4(fused[1]), self.head_p5(fused[2])]
 
     @classmethod
-    def from_config(cls, config_path: str | Path) -> "FDYOLO11":
+    def from_config(cls, config_path: str | Path) -> FDYOLO11:
         with open(config_path) as f:
             config = yaml.safe_load(f)
         model_cfg = config.get("model", {})

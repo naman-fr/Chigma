@@ -7,13 +7,12 @@ and Ultralytics integration for FD-YOLO11 defect detection.
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 from typing import Any
 
-import yaml
-import torch
 import click
+import torch
+import yaml
 from loguru import logger
 
 from src.detection.fd_yolo11 import FDYOLO11

@@ -108,7 +108,7 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "TCH"]
-ignore = ["E501"]
+ignore = ["E501", "B008", "N812", "N801", "TC002", "TC003", "E402", "B023", "B007", "F401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

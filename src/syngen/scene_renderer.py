@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from loguru import logger
 
 try:
     import trimesh
@@ -105,7 +104,7 @@ class SceneRenderer:
         Returns:
             Tuple of (rendered PIL image, list of defect region dicts).
         """
-        from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+        from PIL import Image
 
         # Create base metal background with texture variation
         bg = self._generate_metal_background(lighting_var)
@@ -169,7 +168,7 @@ class SceneRenderer:
 
     def _generate_metal_background(self, lighting_var: int) -> Any:
         """Generate a synthetic metal surface background."""
-        from PIL import Image, ImageDraw
+        from PIL import Image
 
         bg = Image.new("RGBA", (self.image_size, self.image_size))
 

@@ -11,9 +11,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+import click
 import numpy as np
 import torch
-import click
 from loguru import logger
 
 
@@ -84,8 +84,9 @@ class Evaluator:
 
     def benchmark_speed(self, imgsz: int = 640, n_warmup: int = 50, n_runs: int = 200) -> dict[str, float]:
         """Benchmark inference speed."""
-        from ultralytics import YOLO
         import time
+
+        from ultralytics import YOLO
 
         model = YOLO(str(self.model_path))
         dummy = np.random.randint(0, 255, (imgsz, imgsz, 3), dtype=np.uint8)

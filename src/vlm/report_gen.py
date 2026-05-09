@@ -6,13 +6,9 @@ Generates structured HTML/JSON inspection reports from images.
 
 from __future__ import annotations
 
-import io
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
-from loguru import logger
 
 
 class ReportGenerator:
@@ -30,8 +26,8 @@ class ReportGenerator:
         assessment = self.copilot.assess_quality(image_bytes)
 
         report = {
-            "report_id": f"RPT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "report_id": f"RPT-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
+            "timestamp": datetime.now(UTC).isoformat(),
             "assessment": assessment,
             "pass_fail": "FAIL" if assessment.get("defect_found") else "PASS",
             "severity": assessment.get("severity", "unknown"),
