@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ML Artifacts
+models/checkpoints/
+models/exports/
+data/raw/
+data/processed/
+data/synthetic/
+*.pt
+*.onnx
+*.engine
+mlruns/
+mlflow.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.venv/
+venv/
+
+# DVC
+/data/*.dvc
+
+# Logs
+logs/
+*.log
