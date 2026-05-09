@@ -412,6 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res.ok) throw new Error(data.detail || 'API Error');
                 logDrone('ACK: ' + data.message);
                 logDrone('ACT: ' + data.parsed_action.toUpperCase());
+                if (data.target) logDrone('TGT: ' + data.target);
+                if (data.confidence) logDrone('CONF: ' + (data.confidence * 100).toFixed(0) + '%');
             } catch (err) {
                 logDrone('ERR: ' + err.message, true);
             }
