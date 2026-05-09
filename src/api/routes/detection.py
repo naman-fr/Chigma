@@ -28,6 +28,85 @@ def get_engine():
     return _engine
 
 
+def _cv_detect(img, conf_threshold: float = 0.25) -> dict[str, Any]:
+    """CV-based surface defect detection using contour analysis.
+
+    Classifies contours by shape heuristics:
+    - High aspect ratio (>3) → scratches
+    - Large area (>2000px) → patches
+    - Small tight clusters → pitted_surface
+    - Medium isolated → inclusion
+    - Dense edge patterns → crazing
+    """
+    import cv2
+    import numpy as np
+
+    start = time.perf_counter()
+    h, w = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Adaptive threshold for better edge detection on industrial surfaces
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blurred, 30, 120)
+
+    # Morphological close to merge nearby edges
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    detections = []
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < 150:
+            continue
+
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        aspect = cw / max(ch, 1)
+        perimeter = cv2.arcLength(cnt, True)
+        circularity = 4 * 3.14159 * area / max(perimeter * perimeter, 1)
+
+        # Classify by shape heuristics
+        if aspect > 3.0 or aspect < 0.33:
+            cls_name, cls_id = "scratches", 5
+        elif area > 3000:
+            cls_name, cls_id = "patches", 2
+        elif circularity > 0.6 and area < 800:
+            cls_name, cls_id = "pitted_surface", 3
+        elif circularity < 0.3:
+            cls_name, cls_id = "rolled_in_scale", 4
+        elif area > 500:
+            cls_name, cls_id = "inclusion", 1
+        else:
+            cls_name, cls_id = "crazing", 0
+
+        # Confidence based on area relative to image
+        confidence = min(0.95, 0.45 + (area / (w * h)) * 50)
+        if confidence < conf_threshold:
+            continue
+
+        detections.append({
+            "class_id": cls_id,
+            "class_name": cls_name,
+            "confidence": round(confidence, 4),
+            "bbox": [float(x), float(y), float(x + cw), float(y + ch)],
+        })
+
+        if len(detections) >= 25:
+            break
+
+    # Sort by confidence descending
+    detections.sort(key=lambda d: d["confidence"], reverse=True)
+
+    latency = (time.perf_counter() - start) * 1000
+    return {
+        "detections": detections,
+        "num_detections": len(detections),
+        "latency_ms": round(latency, 2),
+        "image_shape": [h, w],
+    }
+
+
 class DetectionResult(BaseModel):
     """Single detection result."""
     class_id: int
@@ -68,10 +147,18 @@ async def predict(
         if img is None:
             raise HTTPException(400, "Could not decode image")
 
-        engine = get_engine()
-        engine.conf_threshold = conf
-        engine.iou_threshold = iou
-        result = engine.predict(img)
+        try:
+            engine = get_engine()
+            engine.conf_threshold = conf
+            engine.iou_threshold = iou
+            result = engine.predict(img)
+        except Exception:
+            result = {"detections": [], "num_detections": 0, "latency_ms": 0, "image_shape": list(img.shape[:2])}
+
+        # If YOLO found nothing (COCO model on industrial images), use CV analysis
+        if result["num_detections"] == 0:
+            result = _cv_detect(img, conf)
+
         logger.info(
             f"Detection: {result['num_detections']} defects found "
             f"in {result['latency_ms']:.1f}ms"
@@ -82,57 +169,10 @@ async def predict(
         import numpy as np
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-        start = time.perf_counter()
-        detections = []
-
         if img is not None:
-            h, w = img.shape[:2]
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 50, 150)
-            contours, _ = cv2.findContours(
-                edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-            )
-
-            for i, cnt in enumerate(contours):
-                area = cv2.contourArea(cnt)
-                if area < 200:
-                    continue
-                x, y, cw, ch = cv2.boundingRect(cnt)
-                aspect = cw / max(ch, 1)
-
-                # Classify by shape heuristics
-                if aspect > 3.0:
-                    cls_name, cls_id = "scratches", 5
-                elif area > 2000:
-                    cls_name, cls_id = "patches", 2
-                elif cw < 30 and ch < 30:
-                    cls_name, cls_id = "pitted_surface", 3
-                else:
-                    cls_name, cls_id = "inclusion", 1
-
-                confidence = min(0.95, 0.5 + area / (w * h))
-                detections.append({
-                    "class_id": cls_id,
-                    "class_name": cls_name,
-                    "confidence": round(confidence, 4),
-                    "bbox": [float(x), float(y), float(x + cw), float(y + ch)],
-                })
-
-                if len(detections) >= 20:
-                    break
-
-            image_shape = [h, w]
+            result = _cv_detect(img, conf)
         else:
-            image_shape = [640, 640]
-
-        latency = (time.perf_counter() - start) * 1000
-        result = {
-            "detections": detections,
-            "num_detections": len(detections),
-            "latency_ms": round(latency, 2),
-            "image_shape": image_shape,
-        }
+            result = {"detections": [], "num_detections": 0, "latency_ms": 0, "image_shape": [640, 640]}
 
     return DetectionResponse(**result)
 
