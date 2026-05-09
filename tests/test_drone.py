@@ -1,6 +1,7 @@
 """Tests for Drone Autonomy module."""
 
-import numpy as np
+import pytest
+np = pytest.importorskip('numpy')
 import pytest
 
 

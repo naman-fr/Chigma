@@ -338,7 +338,95 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(typingId).remove();
             appendChatMsg('system', `Error: ${error.message}`);
         }
+    // --- Sample Images Logic ---
+    window.loadSample = async function(inputId, src, dropzoneId, previewId = null, contentId = null) {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        const file = new File([blob], 'sample.png', { type: 'image/png' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById(inputId).files = dataTransfer.files;
+        
+        if (previewId) {
+            document.getElementById(previewId).src = src;
+            document.getElementById(previewId).style.display = 'block';
+            if(contentId) document.getElementById(contentId).style.display = 'none';
+        } else {
+            const dz = document.getElementById(dropzoneId);
+            dz.querySelector('i').style.display = 'none';
+            dz.querySelector('p').textContent = 'sample.png';
+        }
+    };
+
+    // --- Drone Autonomy Logic ---
+    const droneConsole = document.getElementById('drone-console');
+    const droneForm = document.getElementById('drone-form');
+    
+    function logDrone(msg, isErr=false) {
+        const d = document.createElement('div');
+        d.style.color = isErr ? 'var(--danger)' : '#a3b8cc';
+        d.textContent = `> ${msg}`;
+        droneConsole.appendChild(d);
+        droneConsole.scrollTop = droneConsole.scrollHeight;
+    }
+
+    droneForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('drone-cmd');
+        const cmd = input.value;
+        input.value = '';
+        logDrone('CMD: ' + cmd, false);
+        
+        try {
+            const res = await fetch('/api/v1/drone/command/natural', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({command: cmd})
+            });
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'API Error');
+            logDrone('ACK: ' + data.message, false);
+            logDrone('ACT: ' + data.parsed_action.toUpperCase(), false);
+        } catch(err) {
+            logDrone('ERR: ' + err.message, true);
+        }
     });
+
+    document.getElementById('btn-drone-home').addEventListener('click', async () => {
+        logDrone('CMD: RETURN TO HOME');
+        try {
+            const res = await fetch('/api/v1/drone/command/return-home', {method: 'POST'});
+            const data = await res.json();
+            logDrone('ACK: ' + data.message);
+        } catch(err) {
+            logDrone('ERR: ' + err.message, true);
+        }
+    });
+
+    document.getElementById('btn-drone-stop').addEventListener('click', async () => {
+        logDrone('CMD: EMERGENCY STOP');
+        try {
+            const res = await fetch('/api/v1/drone/command/emergency-stop', {method: 'POST'});
+            const data = await res.json();
+            logDrone('ACK: ' + data.message, true);
+        } catch(err) {
+            logDrone('ERR: ' + err.message, true);
+        }
+    });
+
+    setInterval(async () => {
+        if (!document.getElementById('view-drone').classList.contains('active')) return;
+        try {
+            const res = await fetch('/api/v1/drone/status');
+            if(res.ok) {
+                const data = await res.json();
+                document.getElementById('drone-mode').textContent = data.mode;
+                document.getElementById('drone-alt').textContent = data.altitude_m.toFixed(1);
+                document.getElementById('drone-spd').textContent = data.speed_ms.toFixed(1);
+                document.getElementById('drone-bat').textContent = data.battery_pct.toFixed(0);
+            }
+        } catch(e) {}
+    }, 2000);
 
 });
 

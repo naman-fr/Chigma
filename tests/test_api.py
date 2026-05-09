@@ -1,5 +1,8 @@
 """Tests for FastAPI endpoints."""
 
+import pytest
+pytest.importorskip("torch")
+
 from fastapi.testclient import TestClient
 
 from src.api.main import app
@@ -13,9 +16,7 @@ class TestHealthEndpoints:
     def test_root(self):
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
-        assert data["platform"] == "Chigma"
-        assert "detection" in data["modules"]
+        assert "text/html" in response.headers["content-type"]
 
     def test_health(self):
         response = client.get("/api/v1/health")

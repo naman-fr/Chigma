@@ -188,6 +188,61 @@
                 </div>
             </section>
 
+            <!-- Drone Autonomy View -->
+            <section id="view-drone" class="view-section">
+                <header class="section-header">
+                    <h2>Drone Autonomy</h2>
+                    <p>Live telemetry and natural language flight commands</p>
+                </header>
+
+                <div class="workspace-grid" style="grid-template-columns: 1.5fr 1fr;">
+                    <!-- Telemetry Dashboard -->
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Live Telemetry</h3>
+                        <div class="drone-radar-container" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(59, 130, 246, 0.3);">
+                            <div class="radar-grid" style="position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(59, 130, 246, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.2) 1px, transparent 1px); background-size: 40px 40px;"></div>
+                            <div class="radar-sweep" style="position: absolute; top: 50%; left: 50%; width: 50%; height: 2px; background: linear-gradient(90deg, rgba(59, 130, 246, 0) 0%, rgba(59, 130, 246, 1) 100%); transform-origin: left center; animation: radarSweep 4s infinite linear;"></div>
+                            
+                            <!-- Drone Marker -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-shadow: 0 0 10px rgba(59, 130, 246, 1);">
+                                <i data-lucide="navigation" style="width: 24px; height: 24px; color: var(--accent-primary);"></i>
+                            </div>
+
+                            <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--success);">
+                                <div>MODE: <span id="drone-mode">STABILIZE</span></div>
+                                <div>ALT: <span id="drone-alt">0.0</span> m</div>
+                                <div>SPD: <span id="drone-spd">0.0</span> m/s</div>
+                                <div>BAT: <span id="drone-bat">85</span>%</div>
+                            </div>
+                        </div>
+
+                        <div class="drone-actions" style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                            <button id="btn-drone-home" class="btn btn-secondary" style="flex: 1;"><i data-lucide="home"></i> RTH</button>
+                            <button id="btn-drone-stop" class="btn" style="flex: 1; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.5);"><i data-lucide="octagon"></i> E-STOP</button>
+                        </div>
+                    </div>
+
+                    <!-- Command Terminal -->
+                    <div class="glass-panel" style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); border-top-left-radius: inherit; border-top-right-radius: inherit;">
+                            <h3 style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="terminal" style="width: 16px; height: 16px;"></i> VLM Flight Console
+                            </h3>
+                        </div>
+                        <div id="drone-console" style="flex-grow: 1; padding: 1.5rem; font-family: monospace; font-size: 0.9rem; color: #a3b8cc; overflow-y: auto; background: #050b14; height: 300px;">
+                            <div style="color: var(--success);">> SYSTEM INITIALIZED</div>
+                            <div style="color: var(--success);">> LINK ESTABLISHED</div>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(0,0,0,0.5); border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;">
+                            <form id="drone-form" style="display: flex; gap: 10px;">
+                                <input type="text" id="drone-cmd" class="text-input" placeholder="e.g., 'Inspect the left wall'" style="font-family: monospace; background: rgba(0,0,0,0.8);" required>
+                                <button type="submit" class="btn btn-primary btn-icon"><i data-lucide="play"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 

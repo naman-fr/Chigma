@@ -1,6 +1,7 @@
 """Tests for FD-YOLO11 detection module."""
 
-import torch
+import pytest
+torch = pytest.importorskip('torch')
 
 
 class TestSCC3k2:

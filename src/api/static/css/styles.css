@@ -528,3 +528,10 @@ input[type="range"] {
  . m b - 2   {   m a r g i n - b o t t o m :   0 . 5 r e m ;   } 
   
  
+ / *   D r o n e   R a d a r   A n i m a t i o n   * / 
+ @ k e y f r a m e s   r a d a r S w e e p   { 
+         f r o m   {   t r a n s f o r m :   r o t a t e ( 0 d e g ) ;   } 
+         t o   {   t r a n s f o r m :   r o t a t e ( 3 6 0 d e g ) ;   } 
+ } 
+  
+ 
