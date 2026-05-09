@@ -9,8 +9,12 @@ from unittest.mock import MagicMock, patch
 class TestVLMCopilot:
     """Test VLM Copilot integration."""
 
-    @patch("src.vlm.copilot.AutoModelForVision2Seq")
-    @patch("src.vlm.copilot.AutoProcessor")
+    @pytest.mark.skipif(
+        not pytest.importorskip("transformers", reason="transformers not installed"),
+        reason="transformers required for mock test",
+    )
+    @patch("transformers.AutoModelForVision2Seq")
+    @patch("transformers.AutoProcessor")
     def test_initialization(self, mock_processor, mock_model):
         from src.vlm.copilot import VLMCopilot
         copilot = VLMCopilot(device="cpu")
