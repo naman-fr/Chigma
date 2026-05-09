@@ -1,0 +1,101 @@
+# ============================================================================
+# Chigma — Docker Compose
+# Services: API, MLflow, Prometheus, Grafana
+# ============================================================================
+
+version: "3.9"
+
+services:
+  # ── Chigma API Server ──
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chigma-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./configs:/app/configs
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      - mlflow
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ── MLflow Tracking Server ──
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.0
+    container_name: chigma-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    restart: unless-stopped
+
+  # ── Prometheus Monitoring ──
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: chigma-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./mlops/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+    restart: unless-stopped
+
+  # ── Grafana Dashboards ──
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: chigma-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./mlops/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-chigma2024}
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/model_perf.json
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ── Redis (for caching/queue) ──
+  redis:
+    image: redis:7.4-alpine
+    container_name: chigma-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  mlflow-data:
+  prometheus-data:
+  grafana-data:
+  redis-data:

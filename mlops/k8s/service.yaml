@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chigma-api-service
+  namespace: chigma
+spec:
+  type: ClusterIP
+  selector:
+    app: chigma-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+

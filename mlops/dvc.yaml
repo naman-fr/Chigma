@@ -1,0 +1,63 @@
+# ============================================================================
+# Chigma — DVC Pipeline Configuration
+# Reproducible ML pipeline stages
+# ============================================================================
+
+stages:
+  prepare_data:
+    cmd: python -m src.detection.train --config configs/training.yaml --mode prepare
+    deps:
+      - data/raw
+      - configs/dataset.yaml
+    outs:
+      - data/processed/images/train
+      - data/processed/images/val
+      - data/processed/labels/train
+      - data/processed/labels/val
+
+  generate_synthetic:
+    cmd: python -m src.syngen.pipeline --output data/synthetic --n-per-class 500
+    deps:
+      - src/syngen/pipeline.py
+      - src/syngen/texture_gen.py
+      - src/syngen/scene_renderer.py
+    outs:
+      - data/synthetic/images
+      - data/synthetic/labels
+      - data/synthetic/metadata/pipeline_stats.json
+
+  train_model:
+    cmd: python -m src.detection.train --config configs/training.yaml --dataset configs/dataset.yaml
+    deps:
+      - data/processed
+      - configs/training.yaml
+      - configs/dataset.yaml
+      - src/detection/fd_yolo11.py
+      - src/detection/sc_c3k2.py
+      - src/detection/fsppf.py
+      - src/detection/dysample.py
+    outs:
+      - models/checkpoints/fd-yolo11/weights/best.pt
+    params:
+      - configs/training.yaml:
+          - training.epochs
+          - training.batch_size
+          - training.lr0
+          - model.base
+
+  evaluate_model:
+    cmd: python -m src.detection.evaluate --model models/checkpoints/fd-yolo11/weights/best.pt --dataset configs/dataset.yaml
+    deps:
+      - models/checkpoints/fd-yolo11/weights/best.pt
+      - src/detection/evaluate.py
+      - data/processed/images/val
+    metrics:
+      - metrics/eval_metrics.json:
+          cache: false
+
+  export_model:
+    cmd: python -c "from ultralytics import YOLO; m=YOLO('models/checkpoints/fd-yolo11/weights/best.pt'); m.export(format='onnx', opset=17, simplify=True)"
+    deps:
+      - models/checkpoints/fd-yolo11/weights/best.pt
+    outs:
+      - models/exports/best.onnx

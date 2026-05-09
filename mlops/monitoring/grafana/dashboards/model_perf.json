@@ -1,0 +1,43 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Inference Latency (p95)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [{"expr": "histogram_quantile(0.95, rate(chigma_request_latency_seconds_bucket{endpoint=~\"/api/v1/detection.*\"}[5m]))"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "title": "Request Rate",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [{"expr": "rate(chigma_requests_total[5m])"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "title": "Total Requests",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [{"expr": "sum(chigma_requests_total)"}],
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8}
+    },
+    {
+      "title": "Error Rate",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [{"expr": "sum(rate(chigma_requests_total{status=~\"5..\"}[5m])) / sum(rate(chigma_requests_total[5m]))"}],
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8}
+    }
+  ],
+  "schemaVersion": 39,
+  "title": "Chigma Model Performance",
+  "uid": "chigma-perf",
+  "version": 1
+}
