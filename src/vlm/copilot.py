@@ -8,12 +8,22 @@ and automated reasoning about industrial images.
 from __future__ import annotations
 
 import io
+import json
 from pathlib import Path
 from typing import Any
 
 import torch
 from loguru import logger
 from PIL import Image
+from pydantic import BaseModel, Field
+
+
+class QualityAssessmentSchema(BaseModel):
+    defect_found: bool = Field(..., description="True if any structural surface defect is detected")
+    severity: str = Field(..., description="Severity level: none, low, medium, high, or critical")
+    defect_type: str = Field(..., description="Specific defect category")
+    recommendation: str = Field(..., description="Actionable maintenance recommendation")
+    reasoning: str = Field(..., description="Analytical explanation for the quality decision")
 
 
 class VLMCopilot:
@@ -101,7 +111,7 @@ class VLMCopilot:
         # Convert to PIL Image
         if isinstance(image, bytes):
             pil_image = Image.open(io.BytesIO(image)).convert("RGB")
-        elif isinstance(image, (str, Path)):
+        elif isinstance(image, str | Path):
             pil_image = Image.open(image).convert("RGB")
         elif isinstance(image, Image.Image):
             pil_image = image.convert("RGB")
@@ -154,25 +164,56 @@ class VLMCopilot:
         return response.strip()
 
     def assess_quality(self, image: bytes | str | Path) -> dict[str, Any]:
-        """Perform structured quality assessment.
-
-        Returns:
-            Dict with defect_found, severity, defect_type, recommendation.
-        """
+        """Perform structured quality assessment with strict JSON validation."""
         from src.vlm.prompt_templates import QUALITY_ASSESSMENT_PROMPT
 
-        response = self.query_with_image(image, QUALITY_ASSESSMENT_PROMPT)
+        # Append schema requirements to prompt to enforce structured generation
+        prompt_with_schema = (
+            f"{QUALITY_ASSESSMENT_PROMPT}\n"
+            "Return ONLY a valid JSON object matching this schema:\n"
+            "{\n"
+            "  \"defect_found\": boolean,\n"
+            "  \"severity\": \"none\" | \"low\" | \"medium\" | \"high\" | \"critical\",\n"
+            "  \"defect_type\": string,\n"
+            "  \"recommendation\": string,\n"
+            "  \"reasoning\": string\n"
+            "}"
+        )
 
-        # Parse structured response
-        result: dict[str, Any] = {
-            "raw_assessment": response,
+        response = self.query_with_image(image, prompt_with_schema)
+
+        # Parse and validate JSON
+        try:
+            # Clean response text from potential markdown markers (e.g. ```json ... ```)
+            clean_response = response.strip()
+            if clean_response.startswith("```json"):
+                clean_response = clean_response[7:]
+            if clean_response.endswith("```"):
+                clean_response = clean_response[:-3]
+            clean_response = clean_response.strip()
+
+            parsed_data = json.loads(clean_response)
+
+            # Validate schema
+            validated = QualityAssessmentSchema(**parsed_data)
+            result = validated.model_dump()
+            result["raw_assessment"] = result["reasoning"]
+            logger.info("VLM assessment validated successfully against JSON schema.")
+            return result
+        except Exception as e:
+            logger.warning(f"VLM output did not match JSON schema ({e}). Falling back to heuristics.")
+
+        # Fallback to heuristic parsing if VLM returned free text
+        result = {
             "defect_found": any(
                 keyword in response.lower()
                 for keyword in ["defect", "crack", "scratch", "pit", "inclusion", "patch"]
             ),
+            "raw_assessment": response,
+            "defect_type": "unknown",
+            "recommendation": "Perform manual validation due to copilot parsing warning."
         }
 
-        # Extract severity if mentioned
         for level in ["critical", "high", "medium", "low", "none"]:
             if level in response.lower():
                 result["severity"] = level
