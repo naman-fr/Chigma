@@ -3,110 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chigma - Industrial Vision Platform</title>
+    <title>DRDO Chigma — Tactical Autonomous Surveillance & Defect Detection</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/styles.css">
     <script type="module" src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
-    
-    <div class="app-container">
+    <!-- Military HUD Overlay & Grid -->
+    <div class="hud-grid-overlay"></div>
+    <div class="tactical-vignette"></div>
+
+    <!-- Security Clearance Authorization Gate (Login Overlay) -->
+    <div id="auth-gate" class="auth-gate-container">
+        <div class="auth-card glass-panel tactical-panel">
+            <div class="military-header">
+                <i data-lucide="shield-alert" class="alert-icon-pulse"></i>
+                <h2>SECURE CLEARANCE MANDATORY</h2>
+                <p class="subtitle">DRDO TACTICAL CONTROL NETWORK — LEVEL 3 CLEARANCE</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username"><i data-lucide="user"></i> SERVICE NO / USERNAME</label>
+                    <input type="text" id="username" placeholder="e.g. drdo_commander" required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="password"><i data-lucide="lock"></i> ENCRYPTED ACCESS CODE</label>
+                    <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full tactical-btn">
+                    <i data-lucide="key-round"></i> AUTHORIZE SESSION
+                </button>
+            </form>
+            
+            <div class="tactical-help">
+                <p><strong>Demo Clearances:</strong></p>
+                <div class="clearance-quick-options">
+                    <button class="btn btn-secondary btn-sm" onclick="setDemoCreds('drdo_commander', 'defshield2026')">Commander clearance</button>
+                    <button class="btn btn-secondary btn-sm" onclick="setDemoCreds('army_operator', 'tacticalops')">Operator clearance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Strategic Container -->
+    <div class="app-container" style="display: none;" id="app-main">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar glass-panel">
+        <aside class="sidebar glass-panel tactical-panel">
             <div class="brand">
-                <i data-lucide="hexagon" class="brand-icon"></i>
-                <h1 class="brand-name">Chigma</h1>
+                <i data-lucide="shield" class="brand-icon"></i>
+                <div>
+                    <h1 class="brand-name">CHIGMA</h1>
+                    <span class="sub-brand">DRDO DEFENSE PORTAL</span>
+                </div>
+            </div>
+
+            <!-- Active Operator Badge -->
+            <div class="operator-badge">
+                <div class="avatar"><i data-lucide="user-cog"></i></div>
+                <div class="info">
+                    <span class="rank" id="user-role">Observer</span>
+                    <span class="name" id="user-name">Tactical Unit</span>
+                </div>
             </div>
             
             <nav class="nav-menu">
                 <button class="nav-item active" data-view="dashboard">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
+                    <i data-lucide="shield"></i> Tactical Center
                 </button>
                 <button class="nav-item" data-view="detection">
-                    <i data-lucide="scan-line"></i> Defect Detection
+                    <i data-lucide="aim"></i> Target Analysis
                 </button>
                 <button class="nav-item" data-view="vlm">
-                    <i data-lucide="message-square"></i> VLM Copilot
+                    <i data-lucide="message-square"></i> Mission Copilot
                 </button>
                 <button class="nav-item" data-view="drone">
                     <i data-lucide="plane"></i> Drone Autonomy
+                </button>
+                <button class="nav-item commander-only" data-view="audit" style="display: none;">
+                    <i data-lucide="history"></i> Security Audit
                 </button>
             </nav>
 
             <div class="system-status">
                 <div class="status-indicator">
                     <span class="pulse-dot"></span>
-                    <span id="health-text">System Checking...</span>
+                    <span id="health-text">SYSTEM SECURE</span>
                 </div>
+                <button class="btn btn-secondary btn-full btn-sm mt-3" id="btn-logout" style="font-family: monospace;">
+                    <i data-lucide="log-out"></i> REVOKE CLEARANCE
+                </button>
             </div>
         </aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
             
-            <!-- Dashboard View -->
+            <!-- Tactical Center View -->
             <section id="view-dashboard" class="view-section active">
                 <header class="section-header">
-                    <h2>Platform Overview</h2>
-                    <p>GenAI-Enhanced Industrial Vision & Drone Autonomy</p>
+                    <h2>Strategic Operations Control</h2>
+                    <p>DRDO Autonomous Defect Detection and Tactical Surveillance Hub</p>
                 </header>
                 
                 <div class="metrics-grid">
-                    <div class="metric-card glass-panel">
-                        <div class="metric-icon"><i data-lucide="cpu"></i></div>
+                    <div class="metric-card glass-panel tactical-panel border-green">
+                        <div class="metric-icon color-green"><i data-lucide="network"></i></div>
                         <div class="metric-info">
-                            <h3>Compute Node</h3>
-                            <p id="metric-gpu">NVIDIA RTX (Checking...)</p>
+                            <h3>Clearance Node</h3>
+                            <p id="tactical-role-display">Observer</p>
                         </div>
                     </div>
-                    <div class="metric-card glass-panel">
-                        <div class="metric-icon"><i data-lucide="activity"></i></div>
+                    <div class="metric-card glass-panel tactical-panel border-green">
+                        <div class="metric-icon color-green"><i data-lucide="activity"></i></div>
                         <div class="metric-info">
-                            <h3>API Status</h3>
-                            <p id="metric-status" class="text-gradient">Online</p>
+                            <h3>Telemetry Link</h3>
+                            <p id="metric-status" class="text-gradient green-gradient">ONLINE / ENCRYPTED</p>
                         </div>
                     </div>
-                    <div class="metric-card glass-panel">
-                        <div class="metric-icon"><i data-lucide="layers"></i></div>
+                    <div class="metric-card glass-panel tactical-panel border-green">
+                        <div class="metric-icon color-green"><i data-lucide="cpu"></i></div>
                         <div class="metric-info">
-                            <h3>Active Models</h3>
-                            <p>FD-YOLO11, Qwen2.5-VL</p>
+                            <h3>AESA Target Tracker</h3>
+                            <p id="metric-gpu">CPU Inference Engine</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-hero glass-panel">
+                <div class="dashboard-hero glass-panel tactical-panel">
                     <div class="hero-content">
-                        <h3>Welcome to the future of Industrial Inspection</h3>
-                        <p>Upload a surface image to detect anomalies or chat with our Vision-Language copilot for automated reporting.</p>
-                        <button class="btn btn-primary" onclick="document.querySelector('[data-view=detection]').click()">Start Inspection</button>
+                        <h3>DRDO Intelligent Defense System</h3>
+                        <p>This workstation oversees automated aerial drone tracking, structural defect validation on armored components, and real-time tactical mapping. Ensure your clearance level matches commands.</p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary tactical-btn" onclick="document.querySelector('[data-view=detection]').click()">Run Target Analysis</button>
+                            <button class="btn btn-secondary tactical-btn" onclick="document.querySelector('[data-view=drone]').click()">Enter Flight Console</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Detection View -->
+            <!-- Target Analysis (Defect Detection) View -->
             <section id="view-detection" class="view-section">
                 <header class="section-header">
-                    <h2>Defect Detection</h2>
-                    <p>FD-YOLO11 real-time surface anomaly detection</p>
+                    <h2>Target Defect Analysis</h2>
+                    <p>FD-YOLO11 real-time defect verification on metal plating and armor shells</p>
                 </header>
                 
                 <div class="workspace-grid">
-                    <div class="upload-panel glass-panel">
+                    <div class="upload-panel glass-panel tactical-panel">
                         <form id="detection-form">
                             <div class="file-drop-zone" id="detection-dropzone">
                                 <i data-lucide="upload-cloud"></i>
-                                <p>Drag & drop image or click to browse</p>
+                                <p>Load high-resolution target image or drag here</p>
                                 <input type="file" id="detection-file" accept="image/*" required hidden>
                             </div>
                             
                             <div class="sample-images mt-3">
-                                <p class="text-sm text-secondary mb-2">Or try a sample image:</p>
+                                <p class="text-sm text-secondary mb-2">Tactical Sample Material:</p>
                                 <div class="sample-grid">
                                     <img src="/static/images/sample1.png" class="sample-img" onclick="loadSample('detection-file', '/static/images/sample1.png', 'detection-dropzone')">
                                 </div>
@@ -119,17 +175,17 @@
                                 </div>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary btn-full">
-                                <i data-lucide="zap"></i> Run Inference
+                            <button type="submit" class="btn btn-primary btn-full tactical-btn">
+                                <i data-lucide="scan"></i> DEPLOY DETECTION ENGINE
                             </button>
                         </form>
                     </div>
 
-                    <div class="results-panel glass-panel">
-                        <div class="image-container" id="detection-result-container">
+                    <div class="results-panel glass-panel tactical-panel">
+                        <div class="image-container target-crosshair" id="detection-result-container">
                             <div class="placeholder-text">
-                                <i data-lucide="image"></i>
-                                <p>Results will appear here</p>
+                                <i data-lucide="crosshair"></i>
+                                <p>Deploy scan to analyze surface anomalies</p>
                             </div>
                             <img id="detection-preview" style="display: none;">
                             <canvas id="detection-canvas"></canvas>
@@ -139,50 +195,50 @@
                 </div>
             </section>
 
-            <!-- VLM View -->
+            <!-- Mission Copilot (VLM) View -->
             <section id="view-vlm" class="view-section">
                 <header class="section-header">
-                    <h2>Vision-Language Copilot</h2>
-                    <p>Ask natural language questions about industrial surfaces</p>
+                    <h2>Mission VLM Copilot</h2>
+                    <p>Natural language strategic queries and report auditing</p>
                 </header>
 
                 <div class="workspace-grid">
-                    <div class="upload-panel glass-panel">
+                    <div class="upload-panel glass-panel tactical-panel">
                         <form id="vlm-form">
                             <div class="file-drop-zone" id="vlm-dropzone">
                                 <img id="vlm-preview" style="display: none;" class="preview-img">
                                 <div class="dropzone-content" id="vlm-drop-content">
                                     <i data-lucide="image-plus"></i>
-                                    <p>Select context image</p>
+                                    <p>Select context target image</p>
                                 </div>
                                 <input type="file" id="vlm-file" accept="image/*" required hidden>
                             </div>
 
                             <div class="sample-images mt-3">
-                                <p class="text-sm text-secondary mb-2">Or try a sample image:</p>
+                                <p class="text-sm text-secondary mb-2">Tactical Sample Material:</p>
                                 <div class="sample-grid">
                                     <img src="/static/images/sample1.png" class="sample-img" onclick="loadSample('vlm-file', '/static/images/sample1.png', 'vlm-dropzone', 'vlm-preview', 'vlm-drop-content')">
                                 </div>
                             </div>
                             
                             <div class="chat-input-group mt-3">
-                                <input type="text" id="vlm-query" class="text-input" placeholder="e.g., 'What defects are visible?'" required>
-                                <button type="submit" class="btn btn-primary btn-icon">
+                                <input type="text" id="vlm-query" class="text-input" placeholder="Ask e.g. 'Assess the severity of cracks on this armor plate'" required>
+                                <button type="submit" class="btn btn-primary btn-icon tactical-btn">
                                     <i data-lucide="send"></i>
                                 </button>
                             </div>
                         </form>
                     </div>
 
-                    <div class="chat-panel glass-panel">
+                    <div class="chat-panel glass-panel tactical-panel">
                         <div class="chat-history" id="vlm-chat">
                             <div class="chat-msg system-msg">
-                                <i data-lucide="bot"></i>
-                                <div class="msg-bubble">Hello! Upload an image and ask me to inspect it or generate a report.</div>
+                                <i data-lucide="shield-check"></i>
+                                <div class="msg-bubble">DRDO VLM Copilot online. Feed me an inspection image and ask about structural integrity, defect severity, or anomaly classifications.</div>
                             </div>
                         </div>
-                        <button id="vlm-report-btn" class="btn btn-secondary btn-full mt-3">
-                            <i data-lucide="file-text"></i> Generate Auto-Report
+                        <button id="vlm-report-btn" class="btn btn-secondary btn-full mt-3 tactical-btn">
+                            <i data-lucide="file-check-2"></i> GENERATE TACTICAL REPORT
                         </button>
                     </div>
                 </div>
@@ -191,54 +247,98 @@
             <!-- Drone Autonomy View -->
             <section id="view-drone" class="view-section">
                 <header class="section-header">
-                    <h2>Drone Autonomy</h2>
-                    <p>Live telemetry and natural language flight commands</p>
+                    <h2>Autonomous Drone Navigation</h2>
+                    <p>Enforce secure MAVLink/DRDO flight commands, waypoint overrides, and safety envelopes</p>
                 </header>
 
-                <div class="workspace-grid" style="grid-template-columns: 1.5fr 1fr;">
+                <div class="workspace-grid" style="grid-template-columns: 1.3fr 1fr;">
                     <!-- Telemetry Dashboard -->
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Live Telemetry</h3>
-                        <div class="drone-radar-container" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid rgba(59, 130, 246, 0.3);">
-                            <div class="radar-grid" style="position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(59, 130, 246, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.2) 1px, transparent 1px); background-size: 40px 40px;"></div>
-                            <div class="radar-sweep" style="position: absolute; top: 50%; left: 50%; width: 50%; height: 2px; background: linear-gradient(90deg, rgba(59, 130, 246, 0) 0%, rgba(59, 130, 246, 1) 100%); transform-origin: left center; animation: radarSweep 4s infinite linear;"></div>
+                    <div class="glass-panel tactical-panel" style="padding: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Live Tactical Radar</h3>
+                        
+                        <div class="drone-radar-container">
+                            <div class="radar-grid"></div>
+                            <div class="radar-sweep"></div>
+                            <div class="radar-ring radar-ring-1"></div>
+                            <div class="radar-ring radar-ring-2"></div>
+                            <div class="radar-ring radar-ring-3"></div>
                             
                             <!-- Drone Marker -->
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-shadow: 0 0 10px rgba(59, 130, 246, 1);">
-                                <i data-lucide="navigation" style="width: 24px; height: 24px; color: var(--accent-primary);"></i>
+                            <div class="drone-position-indicator" id="radar-drone">
+                                <i data-lucide="navigation" class="drone-arrow"></i>
+                                <div class="drone-pulse-ring"></div>
                             </div>
 
-                            <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--success);">
-                                <div>MODE: <span id="drone-mode">STABILIZE</span></div>
+                            <!-- Target / Destination Marker -->
+                            <div class="target-marker" id="radar-target" style="display: none;">
+                                <i data-lucide="locate-fixed"></i>
+                            </div>
+
+                            <div class="radar-telemetry-hud">
+                                <div>MODE: <span id="drone-mode" class="color-green">STABILIZE</span></div>
                                 <div>ALT: <span id="drone-alt">0.0</span> m</div>
                                 <div>SPD: <span id="drone-spd">0.0</span> m/s</div>
-                                <div>BAT: <span id="drone-bat">85</span>%</div>
+                                <div>BAT: <span id="drone-bat">100.0</span>%</div>
                             </div>
                         </div>
 
                         <div class="drone-actions" style="display: flex; gap: 10px; margin-top: 1.5rem;">
-                            <button id="btn-drone-home" class="btn btn-secondary" style="flex: 1;"><i data-lucide="home"></i> RTH</button>
-                            <button id="btn-drone-stop" class="btn" style="flex: 1; background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.5);"><i data-lucide="octagon"></i> E-STOP</button>
+                            <button id="btn-drone-home" class="btn btn-secondary tactical-btn" style="flex: 1;"><i data-lucide="home"></i> RETURN HOME (RTL)</button>
+                            <button id="btn-drone-stop" class="btn tactical-btn" style="flex: 1; background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.4);"><i data-lucide="octagon"></i> TERMINATE / HOVER</button>
                         </div>
                     </div>
 
                     <!-- Command Terminal -->
-                    <div class="glass-panel" style="display: flex; flex-direction: column; height: 100%;">
-                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); border-top-left-radius: inherit; border-top-right-radius: inherit;">
+                    <div class="glass-panel tactical-panel" style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="padding: 1.2rem; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); border-top-left-radius: inherit; border-top-right-radius: inherit;">
                             <h3 style="color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="terminal" style="width: 16px; height: 16px;"></i> VLM Flight Console
+                                <i data-lucide="terminal" style="width: 16px; height: 16px; color: var(--accent-primary);"></i> Tactical Flight Console
                             </h3>
                         </div>
-                        <div id="drone-console" style="flex-grow: 1; padding: 1.5rem; font-family: monospace; font-size: 0.9rem; color: #a3b8cc; overflow-y: auto; background: #050b14; height: 300px;">
-                            <div style="color: var(--success);">> SYSTEM INITIALIZED</div>
-                            <div style="color: var(--success);">> LINK ESTABLISHED</div>
+                        <div id="drone-console" class="terminal-body" style="flex-grow: 1; height: 320px;">
+                            <div class="term-green">> SECURE DATA LINK ESTABLISHED</div>
+                            <div class="term-green">> GEOFENCE: RADIUS 100M | MAX ALT 120M</div>
+                            <div class="term-green">> AWAITING CLEARANCE COMMANDS</div>
                         </div>
-                        <div style="padding: 1rem; background: rgba(0,0,0,0.5); border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;">
+                        <div style="padding: 1rem; background: rgba(0,0,0,0.4); border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;">
                             <form id="drone-form" style="display: flex; gap: 10px;">
-                                <input type="text" id="drone-cmd" class="text-input" placeholder="e.g., 'Inspect the left wall'" style="font-family: monospace; background: rgba(0,0,0,0.8);" required>
-                                <button type="submit" class="btn btn-primary btn-icon"><i data-lucide="play"></i></button>
+                                <input type="text" id="drone-cmd" class="text-input" placeholder="e.g. 'fly to the storage tank at 40 meters'" style="font-family: monospace; background: rgba(0,0,0,0.5);" required>
+                                <button type="submit" class="btn btn-primary btn-icon tactical-btn"><i data-lucide="play"></i></button>
                             </form>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Audit View (Commander Only) -->
+            <section id="view-audit" class="view-section">
+                <header class="section-header">
+                    <h2>Tactical Security Audit Logs</h2>
+                    <p>Review role clearings, flight command authorizations, and system breaches</p>
+                </header>
+
+                <div class="glass-panel tactical-panel" style="padding: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 class="color-green">AUDIT LOG REGISTRY</h3>
+                        <button class="btn btn-secondary btn-sm tactical-btn" onclick="loadAuditLogs()"><i data-lucide="rotate-cw"></i> REFRESH REGISTRY</button>
+                    </div>
+                    <div class="audit-table-container">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>TIMESTAMP</th>
+                                    <th>USER</th>
+                                    <th>ACTION</th>
+                                    <th>DETAILS</th>
+                                    <th>SEVERITY</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary);">Unauthorized or no clearance. Click refresh.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
