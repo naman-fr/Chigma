@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install numpy opencv-python-headless pillow
-          pip install fastapi uvicorn pydantic python-multipart aiofiles loguru prometheus-client pyyaml rich click tqdm jinja2 httpx
+          pip install fastapi uvicorn pydantic python-multipart aiofiles loguru prometheus-client pyyaml rich click tqdm jinja2 httpx bcrypt pyjwt pymongo
           pip install pytest pytest-asyncio pytest-cov httpx
       - name: Run tests
         run: pytest tests/ -v --tb=short
