@@ -6,9 +6,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from loguru import logger
 from pydantic import BaseModel, Field
+
+from src.api.auth import RoleChecker, Roles, log_audit
 
 router = APIRouter()
 
@@ -128,6 +130,7 @@ async def predict(
     image: UploadFile = File(..., description="Image to analyze for defects"),
     conf: float = Query(0.25, ge=0.0, le=1.0, description="Confidence threshold"),
     iou: float = Query(0.45, ge=0.0, le=1.0, description="IoU threshold for NMS"),
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
 ) -> DetectionResponse:
     """Run FD-YOLO11 defect detection on an uploaded image.
 
@@ -180,6 +183,7 @@ async def predict(
 @router.post("/predict/batch")
 async def predict_batch(
     images: list[UploadFile] = File(..., description="Batch of images"),
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
 ) -> list[DetectionResponse]:
     """Batch inference on multiple images."""
     import cv2
@@ -200,7 +204,9 @@ async def predict_batch(
 
 
 @router.get("/model/info")
-async def model_info() -> dict[str, Any]:
+async def model_info(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR, Roles.OBSERVER])),
+) -> dict[str, Any]:
     """Get current model information."""
     try:
         engine = get_engine()

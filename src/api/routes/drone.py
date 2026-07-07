@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from pydantic import BaseModel, Field
 
+from src.api.auth import RoleChecker, Roles, log_audit
+from src.drone.agents import HierarchicalFlightAgent
 from src.drone.flight_controller import FlightController
 from src.drone.vlm_commands import VLMCommandParser
 
@@ -16,6 +18,7 @@ router = APIRouter()
 # ── Module-level singletons ──
 _controller = FlightController()
 _parser = VLMCommandParser()
+_flight_agent = HierarchicalFlightAgent()
 
 # Force connection for API usage (no real MAVLink in dev)
 _controller._connection = True
@@ -49,14 +52,19 @@ class DroneStatus(BaseModel):
 
 
 @router.get("/status", response_model=DroneStatus)
-async def get_status() -> DroneStatus:
+async def get_status(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR, Roles.OBSERVER])),
+) -> DroneStatus:
     """Get current drone telemetry and status."""
     telemetry = _controller.get_telemetry()
     return DroneStatus(**telemetry)
 
 
 @router.post("/command/natural")
-async def natural_language_command(cmd: FlightCommand) -> dict[str, Any]:
+async def natural_language_command(
+    cmd: FlightCommand,
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, Any]:
     """Execute a natural language flight command via VLM.
 
     Parses commands like:
@@ -65,53 +73,65 @@ async def natural_language_command(cmd: FlightCommand) -> dict[str, Any]:
     - "Return home"
     - "Inspect the left wall at 5 meters"
     """
-    parsed = _parser.parse(cmd.command)
-    action = parsed["action"]
+    telemetry = _controller.get_telemetry()
+    agent_result = _flight_agent.execute_command(cmd.command, telemetry)
 
-    # Apply state changes based on parsed action
-    if action == "return_home":
-        await _controller.return_to_home()
-    elif action == "hover":
-        _controller._mode = "LOITER"
-    elif action == "land":
-        await _controller.land()
-    elif action in ("fly_to", "inspect", "orbit", "scan_area", "follow"):
-        _controller._mode = "GUIDED"
-        _controller._armed = True
-        alt = parsed.get("altitude_m") or cmd.altitude_m
-        if alt:
-            _controller._telemetry_alt = alt
-        spd = parsed.get("speed_ms") or cmd.speed_ms
-        if spd:
-            _controller._telemetry_spd = spd
+    if agent_result["status"] == "authorized":
+        # Execute the planned steps sequentially
+        for step in agent_result["executable_steps"]:
+            action = step["action"]
+            if action == "takeoff":
+                await _controller.takeoff(step["altitude_m"])
+            elif action == "fly_to":
+                # Convert NED/GPS coordinates back to simulation state
+                await _controller.goto(step["lat"], step["lon"], step["altitude_m"], step["speed_ms"])
+            elif action == "orbit":
+                await _controller.orbit(step["lat"], step["lon"], step["radius_m"], step["altitude_m"])
+            elif action == "return_home":
+                await _controller.return_to_home()
+            elif action == "hover":
+                _controller._mode = "LOITER"
+            elif action == "land":
+                await _controller.land()
 
-    logger.info(f"Drone command: '{cmd.command}' → action={action} target={parsed.get('target')}")
+        log_audit(current_user["username"], "FLIGHT_COMMAND", f"Multi-Agent execution authorized: '{cmd.command}'", "INFO")
 
-    return {
-        "command": cmd.command,
-        "parsed_action": action,
-        "target": parsed.get("target"),
-        "parameters": {
-            k: v for k, v in parsed.items()
-            if k not in ("action", "target", "raw_command", "confidence", "safety_check", "message")
-        },
-        "confidence": parsed.get("confidence", 0.0),
-        "safety_check": parsed.get("safety_check"),
-        "status": "queued" if action != "unknown" else "rejected",
-        "message": (
-            "Command parsed and queued for execution"
-            if action != "unknown"
-            else parsed.get("message", "Unrecognized command")
-        ),
-    }
+        main_action = agent_result["plan_type"]
+        main_target = None
+        for step in agent_result["plan"]:
+            if "target" in step:
+                main_target = step["target"]
+                break
+
+        return {
+            "command": cmd.command,
+            "parsed_action": main_action,
+            "target": main_target,
+            "parameters": agent_result["executable_steps"][0] if agent_result["executable_steps"] else {},
+            "confidence": agent_result["confidence"],
+            "safety_check": agent_result["safety_log"],
+            "status": "queued",
+            "message": "Command verified and executed under secure geofence boundaries.",
+        }
+    else:
+        issues_str = ", ".join(agent_result["safety_log"]["issues"])
+        log_audit(current_user["username"], "FLIGHT_BLOCKED", f"NL command blocked: '{cmd.command}' | Issues: {issues_str}", "WARNING")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Safety verification failed: {issues_str}"
+        )
 
 
 @router.post("/command/waypoint")
-async def waypoint_command(wp: WaypointCommand) -> dict[str, Any]:
+async def waypoint_command(
+    wp: WaypointCommand,
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, Any]:
     """Navigate to a specific GPS waypoint."""
     _controller._mode = "GUIDED"
     _controller._armed = True
     await _controller.goto(wp.latitude, wp.longitude, wp.altitude_m, wp.speed_ms)
+    log_audit(current_user["username"], "WAYPOINT_COMMAND", f"Goto lat={wp.latitude} lon={wp.longitude} alt={wp.altitude_m}", "INFO")
     return {
         "waypoint": {"lat": wp.latitude, "lon": wp.longitude, "alt": wp.altitude_m},
         "speed_ms": wp.speed_ms,
@@ -120,23 +140,32 @@ async def waypoint_command(wp: WaypointCommand) -> dict[str, Any]:
 
 
 @router.post("/command/emergency-stop")
-async def emergency_stop() -> dict[str, str]:
+async def emergency_stop(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, str]:
     """Emergency stop — hover in place."""
     await _controller.emergency_stop()
+    log_audit(current_user["username"], "EMERGENCY_STOP", "Drone emergency hover triggered", "CRITICAL")
     return {"status": "emergency_stop", "message": "Drone hovering in place"}
 
 
 @router.post("/command/return-home")
-async def return_home() -> dict[str, str]:
+async def return_home(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, str]:
     """Return to home position."""
     await _controller.return_to_home()
+    log_audit(current_user["username"], "RETURN_HOME", "RTL procedure triggered", "INFO")
     return {"status": "returning", "message": "Returning to home position"}
 
 
 @router.post("/command/arm")
-async def arm_drone() -> dict[str, str]:
+async def arm_drone(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, str]:
     """Arm the drone motors."""
     success = await _controller.arm()
+    log_audit(current_user["username"], "ARM_DRONE", f"Motors arm success={success}", "INFO")
     return {
         "status": "armed" if success else "failed",
         "message": "Motors armed" if success else "Arm failed — check connection",
@@ -144,9 +173,13 @@ async def arm_drone() -> dict[str, str]:
 
 
 @router.post("/command/takeoff")
-async def takeoff(altitude_m: float = 10.0) -> dict[str, Any]:
+async def takeoff(
+    altitude_m: float = 10.0,
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
+) -> dict[str, Any]:
     """Take off to specified altitude."""
     success = await _controller.takeoff(altitude_m)
+    log_audit(current_user["username"], "TAKEOFF", f"Takeoff altitude={altitude_m} success={success}", "INFO")
     return {
         "status": "taking_off" if success else "failed",
         "target_altitude_m": altitude_m,
@@ -154,7 +187,9 @@ async def takeoff(altitude_m: float = 10.0) -> dict[str, Any]:
 
 
 @router.get("/perception/detections")
-async def get_perception_detections() -> dict[str, Any]:
+async def get_perception_detections(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR, Roles.OBSERVER])),
+) -> dict[str, Any]:
     """Get real-time object detections from drone camera."""
     return {
         "detections": [],
@@ -165,7 +200,9 @@ async def get_perception_detections() -> dict[str, Any]:
 
 
 @router.get("/slam/map")
-async def get_slam_map() -> dict[str, Any]:
+async def get_slam_map(
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR, Roles.OBSERVER])),
+) -> dict[str, Any]:
     """Get current SLAM map data."""
     return {
         "num_keyframes": 0,

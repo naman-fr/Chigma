@@ -9,10 +9,12 @@ from typing import Any
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from loguru import logger
 from PIL import Image
 from pydantic import BaseModel, Field
+
+from src.api.auth import RoleChecker, Roles, log_audit
 
 router = APIRouter()
 
@@ -157,6 +159,7 @@ def _generate_report(features: dict) -> dict[str, Any]:
 async def query_vlm(
     image: UploadFile = File(..., description="Image to analyze"),
     query: str = Query(..., description="Natural language question"),
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
 ) -> VLMQueryResponse:
     """Ask a natural language question about an image.
 
@@ -196,6 +199,7 @@ async def query_vlm(
 @router.post("/report")
 async def generate_report(
     image: UploadFile = File(..., description="Image for inspection report"),
+    current_user: dict = Depends(RoleChecker([Roles.COMMANDER, Roles.OPERATOR])),
 ) -> dict[str, Any]:
     """Generate an automated defect inspection report from an image.
 
