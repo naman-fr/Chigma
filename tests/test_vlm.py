@@ -13,8 +13,8 @@ class TestVLMCopilot:
         not pytest.importorskip("transformers", reason="transformers not installed"),
         reason="transformers required for mock test",
     )
-    @patch("transformers.AutoModelForVision2Seq")
-    @patch("transformers.AutoProcessor")
+    @patch("transformers.models.auto.modeling_auto.AutoModelForVision2Seq")
+    @patch("transformers.models.auto.processing_auto.AutoProcessor")
     def test_initialization(self, mock_processor, mock_model):
         from src.vlm.copilot import VLMCopilot
         copilot = VLMCopilot(device="cpu")
