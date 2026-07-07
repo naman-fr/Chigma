@@ -64,6 +64,11 @@ dependencies = [
     "dvc>=3.56.0",
     "prometheus-client>=0.21.0",
 
+    # ── Security & DB ──
+    "pymongo>=4.8.0",
+    "pyjwt>=2.9.0",
+    "bcrypt>=4.2.0",
+
     # ── Utilities ──
     "pyyaml>=6.0.2",
     "rich>=13.9.0",

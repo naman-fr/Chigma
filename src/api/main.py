@@ -17,6 +17,7 @@ from loguru import logger
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.responses import Response
 
+from src.api.routes.auth import router as auth_router
 from src.api.routes.detection import router as detection_router
 from src.api.routes.drone import router as drone_router
 from src.api.routes.health import router as health_router
@@ -63,6 +64,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 # ── Routes ──
 app.include_router(health_router, prefix="/api/v1", tags=["Health"])
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Security & RBAC"])
 app.include_router(detection_router, prefix="/api/v1/detection", tags=["Detection"])
 app.include_router(vlm_router, prefix="/api/v1/vlm", tags=["Vision-Language"])
 app.include_router(drone_router, prefix="/api/v1/drone", tags=["Drone Autonomy"])
