@@ -2,6 +2,8 @@
 
 > Production-grade platform combining AI-powered drone autonomy, industrial defect detection, GenAI synthetic data, vision-language copilot, and full MLOps infrastructure.
 
+![DRDO Chigma Tactical Console UI Live Demo](src/api/static/images/working_demo.gif)
+
 [![CI](https://github.com/chigma/chigma/actions/workflows/ci.yml/badge.svg)](https://github.com/chigma/chigma/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
